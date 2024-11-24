@@ -12,104 +12,115 @@ class Pelanggan extends BaseController
 
     public function __construct()
     {
-        $this->pelangganmodel = new PelangganModel();
+     $this->pelangganmodel = new PelangganModel();
     }
-
+ 
     public function index()
     {
-        return view('data_pelanggan/v_pelanggan');
+         return view('data_pelanggan/v_pelanggan');
     }
-
-    public function simpan_pelanggan()
-    {
-        //validasi input dari AJAX
-        // $validation = \Config\Services::validation();
-
-        // $validation->setRules([
-        //     'nama_pelanggan'   => 'required',
-        //     'harga'         => 'required|decimal',
-        //     'stok'          => 'required|integer',
-        // ]);
-
-        // if(!$validation->withRequest($this->request)->run()){
-        //     return $this->response->setJSON([
-        //         'status'    => 'error',
-        //         'errors'    => $validation->getErrors(),
-        //     ]);
-        // }
-        
-        $data = [
-            'nama_pelanggan' => $this->request->getVar('nama_pelanggan'),
-            'alamat' => $this->request->getVar('alamat'),
-            'nomor_telepon'  => $this->request->getVar('nomor_telepon'),
-        ];
-
-        $this->pelangganmodel->save($data);
-
-        return $this->response->setJSON([
-            'status'    => 'success',
-            'message'   => 'Data pelanggan berhasil disimpan',
-        ]);
     
-    }
-
     public function tampil_pelanggan()
-    {
+   {
         $pelanggan = $this->pelangganmodel->findAll();
 
         return $this->response->setJSON([
-            'status' => 'success',
-            'pelanggan' => $pelanggan
+            'status'    => 'success',
+            'pelanggan'    => $pelanggan
+        ]);
+   }
+
+   public function simpan_pelanggan()
+   {
+    $validation = \Config\Services::validation();
+
+    $validation->setRules([
+        'nama_pelanggan'   => 'required',
+        'alamat'         => 'required',
+        'nomor_telepon'          => 'required|integer',
+    ]);
+
+    if(!$validation->withRequest($this->request)->run()){
+        return $this->response->setJSON([
+            'status'    => 'error',
+            'errors'    => $validation->getErrors(),
         ]);
     }
 
-    public function hapus_data($id){
-        $result = $this->pelangganmodel->delete($id);
-        if ($result){
-            echo json_encode(['status'=> 'success', 'message'=> 'Pelanggan dihapus']);
-        } else{
-            echo json_encode(['status'=> 'error', 'message'=> 'gkbs']);
-        }
+    $data = [
+        'nama_pelanggan' => $this->request->getVar('nama_pelanggan'),
+        'alamat'       => $this->request->getVar('alamat'),
+        'nomor_telepon'        => $this->request->getVar('nomor_telepon'),
+    ];
+
+    $this->pelangganmodel->save($data);
+
+    return $this->response->setJSON([
+        'status'    => 'success',
+        'message'   => 'Data pelanggan berhasil disimpan'
+    ]);
+   }
+
+   public function delete($id)
+   {
+    $model = new PelangganModel();
+    if($model->delete($id)) {
+        return $this->response->setJSON(['success' => true]);
+    } else{
+        return $this->response->setJSON(['success' => false, 'message' => 'gagal menghapus data']);
     }
-    public function edit_pelanggan($id)
-    {
+   }
+
+   public function update_pelanggan()
+{
+    $id = $this->request->getVar('pelangganId'); // Ambil ID pelanggan dari request
+    $data = [
+        'nama_pelanggan' => $this->request->getVar('nama_pelanggan'),
+        'alamat'       => $this->request->getVar('alamat'),
+        'nomor_telepon'        => $this->request->getVar('nomor_telepon'),
+    ];
+    
+    if ($id && $this->pelangganmodel->update($id, $data)) { // Update pelanggan dengan ID spesifik
+        return $this->response->setJSON([
+            'status'  => 'success',
+            'message' => 'Data pelanggan berhasil diperbarui',
+        ]);
+    } else {
+        return $this->response->setJSON([
+            'status'  => 'error',
+            'message' => 'Gagal memperbarui data pelanggan',
+        ]);
+    }
+}
+
+    
+
+    public function detail($id) {
         $pelanggan = $this->pelangganmodel->find($id);
         if ($pelanggan) {
-            return $this->response->setJSON(['status' => 'success', 'pelanggan' => $pelanggan]);
-        } else {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Pelanggan tidak ditemukan.']);
-        }
-    }
-
-    public function update_pelanggan()
-    {
-        $id = $this->request->getVar('id');
-        $validation = \Config\Services::validation();
-        $validation->setRules([
-            'nama_pelanggan' => 'required',
-            'harga' => 'required|decimal',
-            'stok' => 'required|integer',
-        ]);
-
-        if (!$validation->withRequest($this->request)->run()) {
             return $this->response->setJSON([
-                'status' => 'error',
-                'errors' => $validation->getErrors(),
+                'status' => 'success',
+                'pelanggan' => $pelanggan,
             ]);
+        } else {
+            return $this->response->setJSON(['status' => 'error']);
         }
-
-        $data = [
-            'nama_pelanggan' => $this->request->getVar('nama_pelanggan'),
-            'harga' => $this->request->getVar('harga'),
-            'stok' => $this->request->getVar('stok'),
-        ];
-
-        $this->pelangganmodel->update($id, $data);
-        return $this->response->setJSON([
-            'status' => 'success',
-            'message' => 'Data berhasil diperbarui.'
-        ]);
     }
 
+    // Fungsi untuk mengambil data pelanggan yang akan diedit
+    public function edit_pelanggan()
+    {
+        $pelangganID = $this->request->getVar('id');
+        $pelanggan = $this->pelangganmodel->find($pelangganID);
+
+        if ($pelanggan) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'pelanggan' => $pelanggan
+            ]);
+        } else {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Pelanggan Tidak Ditemukan'], 404);
+        }
+    }
 
 }
